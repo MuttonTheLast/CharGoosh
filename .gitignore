@@ -5,6 +5,7 @@
 libs/**/*
 !libs/.keep
 !libs/dotnet/
+!libs/dotnet/**/*
 # User-specific files
 *.rsuser
 *.suo
@@ -106,7 +107,7 @@ StyleCopReport.xml
 *.idb
 *.iobj
 *.pch
-*.pdb
+# *.pdb i need them sometimes
 *.ipdb
 *.pgc
 *.pgd
