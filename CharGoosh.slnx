@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="CharGoosh/CharGoosh.csproj" />
+    
+    <Project Path="CharGoosh/CharGoosh.csproj" />
+    <Project Path="modules/CharGoosh.Math/CharGoosh.Math.csproj" />
 </Solution>
