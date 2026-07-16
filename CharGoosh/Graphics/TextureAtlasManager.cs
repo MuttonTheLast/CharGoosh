@@ -25,7 +25,7 @@ public class AddTextureData(uint tid, uint atlas, byte[] data, string path = "",
 
 }
 
-class TextureAtlasManager
+class TextureAtlasManager : IDisposable
 {
 
     // Lists
@@ -75,6 +75,8 @@ class TextureAtlasManager
         }
     }
 
+
+    bool disposed = false;
 
     public TextureAtlasManager(GraphicsDevice gd, TitleStorage storage,
             uint minTextureSize = 16, uint atlasSize = 2048,
@@ -360,6 +362,42 @@ class TextureAtlasManager
         Console.WriteLine("Extending texture atlas");
     }
 
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    void Dispose(bool disposing)
+    {
+        if (disposed)
+        {
+            return;
+        }
+        if (_fence != null)
+        {
+            _gd.WaitForFence(_fence);
+        }
+        if (disposing)
+        {
+            AtlasArray.Dispose();
+            DefaultSampler.Dispose();
+            TextureDataBuffer.Dispose();
+
+            _textureQeueu.Clear();
+            _oldTextureAtlas.Dispose();
+            _textureToAdd?.Dispose();
+
+            _resultDataBuffer.Dispose();
+            _resultTB?.Dispose();
+            _addPipeline.Dispose();
+
+            _smallTextureSize = 0;
+            _textureAtlasSize = 0;
+            _fence = null;
+        }
+
+        disposed = false;
+    }
 }
 
 // texture id data
