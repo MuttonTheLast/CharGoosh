@@ -12,6 +12,8 @@
    <Reference Include="MoonWorks">
      <HintPath>../libs/dotnet/MoonWorks.dll</HintPath>
    </Reference>
+
+   <ProjectReference Include="../modules/CharGoosh.Logger/CharGoosh.Logger.csproj" />
  </ItemGroup>
 
  <ItemGroup>
