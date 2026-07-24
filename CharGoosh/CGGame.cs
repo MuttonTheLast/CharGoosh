@@ -9,24 +9,15 @@ using MoonWorks.Input;
 namespace CharGoosh;
 
 using Buffer = MoonWorks.Graphics.Buffer;
-public class CGGame : Game
+using Camera = Game.Camera;
+using PrimitiveType = MoonWorks.Graphics.PrimitiveType;
+public class CGGame : MoonWorks.Game
 {
 
 
     readonly static string SHADERS_PATH = "assets/shaders/";
 
 
-    readonly static string[] TEXTURE_PATHS = [
-        "assets/textures/invalid.png",
-        "assets/textures/green.png",
-        "assets/textures/gray.png",
-        "assets/textures/brown.png",
-        "assets/textures/blue.png",
-        "assets/textures/red.png",
-        "assets/textures/purple.png",
-
-    ];
-    readonly Texture[] textures = new Texture[TEXTURE_PATHS.Length];
 
     readonly Sampler[] samplers = new Sampler[6];
 
@@ -36,11 +27,20 @@ public class CGGame : Game
 
     readonly GraphicsPipeline DrawPipeline;
 
-    int currentTextureIndex = 0;
+    Texture depthTexture;
+
     int currentSamplerIndex = 0;
 
-    readonly TextureAtlasManager textureAtlasManager;
+    readonly Camera _cam = new();
+
+    public readonly ResourceManager ResourceManager;
     public bool Debug { get; private set; }
+
+
+    bool depthOnly = false;
+
+    // debug things
+    readonly uint woodimg = 0;
 
     public CGGame(AppInfo appInfo, WindowCreateInfo windowCreateInfo,
             FramePacingSettings framePacingSettings, ShaderFormat availableShaderFormats,
@@ -49,13 +49,85 @@ public class CGGame : Game
     {
         Debug = debugMode;
 
+        // ResourceManager.TextureAtlasManager = new TextureAtlasManager(GraphicsDevice, RootTitleStorage,
+        //         16, 256, ushort.MaxValue, Debug);
+        //_meshManager = new MeshManager(GraphicsDevice, RootTitleStorage);
+
+        this.ResourceManager = new ResourceManager(GraphicsDevice, RootTitleStorage, Debug);
+        ResourceManager.TextureAtlasManager.RequestAddTexture("assets/textures/invalid.png");
+        ResourceManager.TextureAtlasManager.RequestAddTexture("assets/textures/red.png");
+        ResourceManager.TextureAtlasManager.RequestAddTexture("assets/textures/white.png");
+        woodimg = ResourceManager.TextureAtlasManager.RequestAddTexture("assets/textures/wood.png");
+
+
+        // NOTE: AI Generated Data
+        ReadOnlySpan<MeshDataGPU> cubeData = [
+            // ---------- FRONT (Z = -1) ----------
+            new MeshDataGPU(new Vector3(-1,-1,-1), new Vector3(0,0,-1), new Vector2(0,0)),
+            new MeshDataGPU(new Vector3( 1,-1,-1), new Vector3(0,0,-1), new Vector2(1,0)),
+            new MeshDataGPU(new Vector3( 1, 1,-1), new Vector3(0,0,-1), new Vector2(1,1)),
+            new MeshDataGPU(new Vector3(-1, 1,-1), new Vector3(0,0,-1), new Vector2(0,1)),
+
+            // ---------- BACK (Z = +1) ----------
+            new MeshDataGPU(new Vector3( 1,-1, 1), new Vector3(0,0,1), new Vector2(0,0)),
+            new MeshDataGPU(new Vector3(-1,-1, 1), new Vector3(0,0,1), new Vector2(1,0)),
+            new MeshDataGPU(new Vector3(-1, 1, 1), new Vector3(0,0,1), new Vector2(1,1)),
+            new MeshDataGPU(new Vector3( 1, 1, 1), new Vector3(0,0,1), new Vector2(0,1)),
+
+            // ---------- LEFT (X = -1) ----------
+            new MeshDataGPU(new Vector3(-0.5f,-1, 1), new Vector3(-1,0,0), new Vector2(0,0)),
+            new MeshDataGPU(new Vector3(-0.5f,-1,-1), new Vector3(-1,0,0), new Vector2(1,0)),
+            new MeshDataGPU(new Vector3(-0.5f, 1,-1), new Vector3(-1,0,0), new Vector2(1,1)),
+            new MeshDataGPU(new Vector3(-0.5f, 1, 1), new Vector3(-1,0,0), new Vector2(0,1)),
+
+            // ---------- RIGHT (X = +1) ----------
+            new MeshDataGPU(new Vector3( 1,-1,-1), new Vector3(1,0,0), new Vector2(0,0)),
+            new MeshDataGPU(new Vector3( 1,-1, 1), new Vector3(1,0,0), new Vector2(1,0)),
+            new MeshDataGPU(new Vector3( 1, 1, 1), new Vector3(1,0,0), new Vector2(1,1)),
+            new MeshDataGPU(new Vector3( 1, 1,-1), new Vector3(1,0,0), new Vector2(0,1)),
+
+            // ---------- BOTTOM (Y = -1) ----------
+            new MeshDataGPU(new Vector3(-1,-1, 1), new Vector3(0,-1,0), new Vector2(0,0)),
+            new MeshDataGPU(new Vector3( 1,-1, 1), new Vector3(0,-1,0), new Vector2(1,0)),
+            new MeshDataGPU(new Vector3( 1,-1,-1), new Vector3(0,-1,0), new Vector2(1,1)),
+            new MeshDataGPU(new Vector3(-1,-1,-1), new Vector3(0,-1,0), new Vector2(0,1)),
+
+            // ---------- TOP (Y = +1) ----------
+            new MeshDataGPU(new Vector3(-1, 1,-1), new Vector3(0,1,0), new Vector2(0,0)),
+            new MeshDataGPU(new Vector3( 1, 1,-1), new Vector3(0,1,0), new Vector2(1,0)),
+            new MeshDataGPU(new Vector3( 1, 1, 1), new Vector3(0,1,0), new Vector2(1,1)),
+            new MeshDataGPU(new Vector3(-1, 1, 1), new Vector3(0,1,0), new Vector2(0,1))
+        ];
+
+        // NOTE: AI Generated
+        ReadOnlySpan<uint> indexData = [
+            // Front
+            0, 2, 1,  0, 3, 2,
+
+            // Back
+            4, 6, 5,  4, 7, 6,
+
+            // Left
+            8, 10, 9,  8, 11, 10,
+
+            // Right
+            12, 14, 13,  12, 15, 14,
+
+            // Bottom
+            16, 18, 17,  16, 19, 18,
+
+            // Top
+            20, 22, 21,  20, 23, 22
+        ];
+        var cubeMeshId = ResourceManager.MeshManager.AddMesh(cubeData, indexData);
+
 
         Shader vertex_shader = ShaderCross.Create(GraphicsDevice, RootTitleStorage,
-                SHADERS_PATH + "PositionColorAtlas.vert.hlsl", "VS_Main",
+                SHADERS_PATH + "PositionMeshIndex.vert.hlsl", "VS_Main",
                 ShaderCross.ShaderFormat.HLSL, ShaderStage.Vertex, Debug, null, SHADERS_PATH);
 
         Shader pixel_shader = ShaderCross.Create(GraphicsDevice, RootTitleStorage,
-                SHADERS_PATH + "PositionColorAtlas.pixel.hlsl", "PS_Main",
+                SHADERS_PATH + "PositionMeshIndex.pixel.hlsl", "PS_Main",
                 ShaderCross.ShaderFormat.HLSL, ShaderStage.Fragment, Debug, null, SHADERS_PATH);
 
         var pci = new GraphicsPipelineCreateInfo
@@ -69,13 +141,20 @@ public class CGGame : Game
                         Format = MainWindow.SwapchainFormat,
                         BlendState = ColorTargetBlendState.Opaque
                     }
-                ]
+                ],
+                HasDepthStencilTarget = true,
+                DepthStencilFormat = TextureFormat.D16Unorm,
             },
-            DepthStencilState = DepthStencilState.Disable,
+            DepthStencilState = new DepthStencilState
+            {
+                EnableDepthTest = true,
+                EnableDepthWrite = true,
+                CompareOp = CompareOp.LessOrEqual,
+            },
             MultisampleState = MultisampleState.None,
             PrimitiveType = PrimitiveType.TriangleList,
-            RasterizerState = RasterizerState.CCW_CullNone,
-            VertexInputState = VertexInputState.CreateSingleBinding<PositionColorAtlas>(),
+            RasterizerState = RasterizerState.CW_CullBack,
+            VertexInputState = VertexInputState.CreateSingleBinding<PositionMeshIndexAtlas>(),
             VertexShader = vertex_shader,
             FragmentShader = pixel_shader,
         };
@@ -88,59 +167,70 @@ public class CGGame : Game
         samplers[4] = Sampler.Create(GraphicsDevice, SamplerCreateInfo.AnisotropicClamp);
         samplers[5] = Sampler.Create(GraphicsDevice, SamplerCreateInfo.AnisotropicWrap);
 
-        ReadOnlySpan<PositionColorAtlas> vertexData = [
-            new PositionColorAtlas(new Vector3(-0.5f,  0.5f, 0), Color.White, 0, 1),
-            new PositionColorAtlas(new Vector3( 0.5f,  0.5f, 0), Color.White, 1, 1),
-            new PositionColorAtlas(new Vector3( 0.5f, -0.5f, 0), Color.White, 3, 1),
-            new PositionColorAtlas(new Vector3(-0.5f, -0.5f, 0), Color.Black, 2, 1),
-            new PositionColorAtlas(new Vector3(0.5f, 1.0f, 0), Color.White, 0, 2),
-            new PositionColorAtlas(new Vector3(1.0f,  1.0f, 0), Color.White, 1, 2),
-            new PositionColorAtlas(new Vector3(1.0f, 0.5f, 0), Color.White, 3, 2),
-            new PositionColorAtlas(new Vector3(0.5f, 0.5f, 0), Color.Black, 2, 2),
+        depthTexture = Texture.Create2D(GraphicsDevice, MainWindow.Width, MainWindow.Height,
+                TextureFormat.D16Unorm,
+                TextureUsageFlags.DepthStencilTarget | TextureUsageFlags.Sampler);
+
+        ReadOnlySpan<PositionMeshIndexAtlas> vertexData = [
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 0,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 1,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 2,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 3,woodimg),
+
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 4,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 5,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 6,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 7,woodimg),
+
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 8,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 9,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 10,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 11,woodimg),
+
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 12,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 13,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 14,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 15,woodimg),
+
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 16,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 17,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 18,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 19,woodimg),
+
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 20,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 21,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 22,woodimg),
+            new PositionMeshIndexAtlas(new Vector3(0,0,0), 0, 23,woodimg),
 
         ];
 
-        ReadOnlySpan<ushort> indexData = [
-            0, 1, 2,
-            0, 2, 3,
 
-            4, 5, 6,
-            4, 6, 7,
-        ];
 
-        textureAtlasManager = new TextureAtlasManager(GraphicsDevice, RootTitleStorage,
-                16, 256, ushort.MaxValue, Debug);
-        textureAtlasManager.RequestAddTexture("assets/textures/invalid.png");
-        textureAtlasManager.RequestAddTexture("assets/textures/red.png");
+
         var resourceUploader = new ResourceUploader(GraphicsDevice);
 
 
         vertexBuffer = resourceUploader.CreateBuffer(vertexData, BufferUsageFlags.Vertex);
-        indexBuffer = resourceUploader.CreateBuffer(indexData, BufferUsageFlags.Index);
+        indexBuffer = resourceUploader.CreateBuffer(
+                ResourceManager.MeshManager.GetMeshVisibleIndices(cubeMeshId, MeshCullingFace.Back | MeshCullingFace.Top | MeshCullingFace.Front),
+                BufferUsageFlags.Index);
 
-        for (int i = 0; i < TEXTURE_PATHS.Length; i++)
-        {
-            string path = TEXTURE_PATHS[i];
-            if (!RootTitleStorage.Exists(path))
-            {
-                textures[i] = Texture.Create2D(GraphicsDevice, 16, 16, TextureFormat.R8G8B8A8Unorm,
-                        TextureUsageFlags.Sampler);
-                continue;
-            }
-            RootTitleStorage.GetFileSize(path, out ulong size);
-            byte[] data = new byte[size];
-            Span<byte> data_span = data.AsSpan();
-            RootTitleStorage.ReadFile(path, data_span);
-
-            textures[i] = resourceUploader.CreateTexture2DFromCompressed(data_span,
-                    TextureFormat.R8G8B8A8Unorm, TextureUsageFlags.Sampler);
-        }
         resourceUploader.Upload();
         resourceUploader.Dispose();
 
+        MainWindow.SetRelativeMouseMode(true);
 
+
+        MainWindow.RegisterSizeChangeCallback(WindowSizeChanged);
+        DoTest();
     }
 
+    private void WindowSizeChanged(uint width, uint height)
+    {
+        depthTexture.Dispose();
+        depthTexture = Texture.Create2D(GraphicsDevice, width, height, TextureFormat.D16Unorm,
+                TextureUsageFlags.Sampler | TextureUsageFlags.DepthStencilTarget);
+    }
 
     protected override void Step()
     {
@@ -148,46 +238,81 @@ public class CGGame : Game
 
     protected override void Update(TimeSpan delta)
     {
+        _cam.Transform.Scale.X = MainWindow.Width;
+        _cam.Transform.Scale.Y = MainWindow.Height;
+        _cam.Transform.Scale.Z = 100.0f;
 
-        if (Inputs.Keyboard.IsPressed(KeyCode.A))
+        if (Inputs.Keyboard.IsDown(KeyCode.A))
         {
-            currentTextureIndex = (currentTextureIndex - 1 + textures.Length) % textures.Length;
+            _cam.Transform.Position -= _cam.Transform.Right * 20 * delta.Milliseconds / 1000.0f;
         }
-        if (Inputs.Keyboard.IsPressed(KeyCode.D))
+        if (Inputs.Keyboard.IsDown(KeyCode.D))
         {
-            currentTextureIndex = (currentTextureIndex + 1) % textures.Length;
+            _cam.Transform.Position += _cam.Transform.Right * 20 * delta.Milliseconds / 1000.0f;
+
         }
-        if (Inputs.Keyboard.IsPressed(KeyCode.W))
+        if (Inputs.Keyboard.IsDown(KeyCode.W))
         {
-            currentSamplerIndex = (currentSamplerIndex + 1) % samplers.Length;
+            _cam.Transform.Position += _cam.Transform.Forward * 20 * delta.Milliseconds / 1000.0f;
+
+            //currentSamplerIndex = (currentSamplerIndex + 1) % samplers.Length;
         }
-        if (Inputs.Keyboard.IsPressed(KeyCode.S))
+        if (Inputs.Keyboard.IsDown(KeyCode.S))
         {
-            currentSamplerIndex = (currentSamplerIndex - 1 + samplers.Length) % samplers.Length;
+            _cam.Transform.Position -= _cam.Transform.Forward * 20 * delta.Milliseconds / 1000.0f;
+
+            //currentSamplerIndex = (currentSamplerIndex - 1 + samplers.Length) % samplers.Length;
         }
-        textureAtlasManager.Update();
+
+        float sensitivity = 0.5f;
+
+        float dx = Inputs.Mouse.DeltaX;
+        float dy = Inputs.Mouse.DeltaY;
+
+        float yaw = dx * sensitivity * delta.Milliseconds / 1000.0f; // yaw
+        float pitch = dy * sensitivity * delta.Milliseconds / 1000.0f; // yaw
+
+        Quaternion yawQ = Quaternion.CreateFromAxisAngle(_cam.Transform.Up, yaw);
+        Quaternion pitchQ = Quaternion.CreateFromAxisAngle(_cam.Transform.Right, pitch);
+
+        _cam.Transform.Rotation = pitchQ * yawQ * _cam.Transform.Rotation;
+
+
+        //e.Y += Inputs.Mouse.DeltaY * sensitivity * delta.Milliseconds / 1000.0f; // pitch
+        ResourceManager.TextureAtlasManager.Update();
     }
 
     protected override void Draw(double alpha)
     {
+        var proj = _cam.Projection;
+        var view = _cam.ViewMatrix;
+
+        var viewProj = Matrix4x4.Transpose(view * proj);
         var cmdbuf = GraphicsDevice.AcquireCommandBuffer();
         var swapchain = cmdbuf.AcquireSwapchainTexture(MainWindow);
         if (swapchain != null)
         {
+            var depthTarget = new DepthStencilTargetInfo(depthTexture, 1.0f, 0, true);
             var renderPass = cmdbuf.BeginRenderPass(
-                    new ColorTargetInfo(swapchain, Color.Cyan, true)
+                    in depthTarget,
+                    new ColorTargetInfo(swapchain, Color.LightGray, true)
                     );
 
-            cmdbuf.PushVertexUniformData(textureAtlasManager.TextureAtlasSize, 0);
+            cmdbuf.PushVertexUniformData(
+                    new VertexUniform(viewProj,
+                        ResourceManager.TextureAtlasManager.TextureAtlasSize), 0);
 
             renderPass.BindGraphicsPipeline(DrawPipeline);
             renderPass.BindVertexBuffers(vertexBuffer);
             renderPass.BindIndexBuffer(indexBuffer, IndexElementSize.Sixteen);
             renderPass.BindFragmentSamplers(
-                    new TextureSamplerBinding(textureAtlasManager.AtlasArray,
+                    new TextureSamplerBinding(ResourceManager.TextureAtlasManager.AtlasArray,
                         samplers[currentSamplerIndex]));
-            renderPass.BindVertexStorageBuffers(textureAtlasManager.TextureDataBuffer);
-            renderPass.DrawIndexedPrimitives(12, 1, 0, 0, 0);
+            renderPass.BindVertexStorageBuffers([
+                    ResourceManager.TextureAtlasManager.TextureDataBuffer,
+                    ResourceManager.MeshManager.Meshes
+            ]);
+            renderPass.DrawIndexedPrimitives(36, 1, 0, 0, 0);
             cmdbuf.EndRenderPass(renderPass);
         }
         GraphicsDevice.Submit(cmdbuf);
@@ -198,36 +323,78 @@ public class CGGame : Game
     {
         Console.WriteLine("Destroy Called :) im happy");
     }
+
+    // just a method that im testing what i want to do
+    void DoTest()
+    {
+    }
 }
 
-[StructLayout(LayoutKind.Explicit, Size = 36)]
-struct PositionColorAtlas(Vector3 position, Color color, uint coordPos, uint tid) : IVertexType
+// [StructLayout(LayoutKind.Explicit, Size = 36)]
+// struct PositionColorAtlas(Vector3 position, Color color, uint coordPos, uint tid) : IVertexType
+// {
+//     [FieldOffset(0)]
+//     public Vector3 Position = position;
+//     [FieldOffset(12)]
+//     public Color Color = color;
+//     [FieldOffset(28)]
+//     public uint CoordPos = coordPos;
+//     [FieldOffset(32)]
+//     public uint TID = tid;
+//
+//
+//     public static VertexElementFormat[] Formats { get; } = [
+//         VertexElementFormat.Float3,
+//         VertexElementFormat.Ubyte4Norm,
+//         VertexElementFormat.Uint,
+//         VertexElementFormat.Uint,
+//     ];
+//
+//     public static uint[] Offsets { get; } = [
+//         0, 12, 28,32
+//     ];
+//
+//     public override readonly string ToString()
+//     {
+//         return $"Positon: {Position}, Color: {Color}, CoordPos: {CoordPos}, TID: {TID}";
+//     }
+// }
+
+
+[StructLayout(LayoutKind.Explicit, Size = 24)]
+struct PositionMeshIndexAtlas(Vector3 pos, uint meshOffset, uint vertexIndex, uint tid) : IVertexType
 {
     [FieldOffset(0)]
-    public Vector3 Position = position;
+    public Vector3 Position = pos;
     [FieldOffset(12)]
-    public Color Color = color;
-    [FieldOffset(28)]
-    public uint CoordPos = coordPos;
-    [FieldOffset(32)]
+    public uint MeshOffset = meshOffset;
+    [FieldOffset(16)]
+    public uint VertexIndex = vertexIndex;
+    [FieldOffset(20)]
     public uint TID = tid;
 
 
     public static VertexElementFormat[] Formats { get; } = [
         VertexElementFormat.Float3,
-        VertexElementFormat.Ubyte4Norm,
+        VertexElementFormat.Uint,
         VertexElementFormat.Uint,
         VertexElementFormat.Uint,
     ];
 
     public static uint[] Offsets { get; } = [
-        0, 12, 28,32
+        0, 12, 16, 20
     ];
 
-    public override readonly string ToString()
-    {
-        return $"Positon: {Position}, Color: {Color}, CoordPos: {CoordPos}, TID: {TID}";
-    }
+
+}
+
+[StructLayout(LayoutKind.Explicit, Size = 68)]
+struct VertexUniform(Matrix4x4 mat, uint atlasSize)
+{
+    [FieldOffset(0)]
+    public Matrix4x4 Mat = mat; // 64 - c0
+    [FieldOffset(64)]
+    public uint AtlasSize = atlasSize; // 64-> 4 c1.x
 }
 
 // [StructLayout(LayoutKind.Explicit, Size = 36)]
