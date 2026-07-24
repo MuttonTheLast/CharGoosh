@@ -25,7 +25,7 @@ public class AddTextureData(uint tid, uint atlas, byte[] data, string path = "",
 
 }
 
-class TextureAtlasManager : IDisposable
+public class TextureAtlasManager : IDisposable
 {
 
     // Lists
