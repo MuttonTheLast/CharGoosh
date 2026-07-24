@@ -9,12 +9,32 @@ using MoonWorks.Storage;
 using Buffer = MoonWorks.Graphics.Buffer;
 namespace CharGoosh.Graphics;
 
-struct MeshData(ushort[] indices, uint offet, ushort vertexCount)
+[Flags]
+public enum MeshCullingFace : byte
 {
-    public ushort[] Indices = indices;
+    None = 0,
+    Top = 1 << 0,
+    Down = 1 << 1,
+    Left = 1 << 2,
+    Right = 1 << 3,
+    Front = 1 << 4,
+    Back = 1 << 5,
+
+    All = Top | Down | Left | Right | Front | Back,
+}
+
+struct MeshData(MeshIndex[] indices, uint offet, ushort vertexCount)
+{
+    public MeshIndex[] Indices = indices;
     public uint Offset = offet;
     public ushort VertexCount = vertexCount;
 }
+public struct MeshIndex(ushort index, MeshCullingFace cullingFace)
+{
+    public readonly ushort Index = index;
+    public MeshCullingFace CullingFace = cullingFace;
+}
+
 
 public class MeshManager : IDisposable
 {
@@ -23,7 +43,7 @@ public class MeshManager : IDisposable
     readonly TitleStorage _titleStorage;
 
     // meshid -> MeshOffset
-    readonly Dictionary<uint, MeshData> _meshOffsets = [];
+    readonly Dictionary<uint, MeshData> _meshDatas = [];
 
 
     public Buffer Meshes { get; private set; }
@@ -42,27 +62,57 @@ public class MeshManager : IDisposable
 
     public uint GetMeshOffset(uint meshId)
     {
-        if (!_meshOffsets.TryGetValue(meshId, out MeshData md))
+        if (!_meshDatas.TryGetValue(meshId, out MeshData md))
         {
             return 0;
         }
         return md.Offset;
     }
-    public ReadOnlySpan<ushort> GetMeshIndices(uint meshId)
+    public ReadOnlySpan<MeshIndex> GetMeshIndices(uint meshId)
     {
-        if (!_meshOffsets.TryGetValue(meshId, out MeshData md))
+        if (!_meshDatas.TryGetValue(meshId, out MeshData md))
         {
             return [];
         }
         return md.Indices.AsSpan();
     }
 
-    public uint AddMesh(ReadOnlySpan<MeshDataGPU> meshData, ReadOnlySpan<uint> indices)
+    public ushort[] GetMeshVisibleIndices(uint meshId, MeshCullingFace visibleFaces)
+    {
+        var indices = GetMeshIndices(meshId);
+        ushort[] allIndices = new ushort[indices.Length];
+        int facesCount = 0;
+        for (int i = 0; i < indices.Length; i++)
+        {
+            var currentIndex = indices[i];
+            // Check if the face should be rendered (not culled)
+            // if cull is off for that face or currently visible face then draw it
+            if (currentIndex.CullingFace == 0 ||
+                    (visibleFaces & currentIndex.CullingFace) != 0)
+            {
+                allIndices[facesCount] = currentIndex.Index;
+                facesCount++;
+            }
+        }
+        ushort[] visibleIndices = new ushort[facesCount];
+        Array.Copy(allIndices, 0, visibleIndices, 0, facesCount);
+        return visibleIndices;
+    }
+
+
+    public uint AddMesh(ReadOnlySpan<MeshDataGPU> meshData, ReadOnlySpan<uint> indices,
+            float faceCullingDistance = 1.0f)
     {
         var indicesLength = indices.Length;
         if (indicesLength > ushort.MaxValue)
         {
             Console.WriteLine($"Voxel engine does not support indices more than {ushort.MaxValue}");
+            return 0;
+        }
+
+        if (indicesLength % 3 != 0)
+        {
+            Console.WriteLine("Indices count must be a multiple of 3.");
             return 0;
         }
 
@@ -79,7 +129,6 @@ public class MeshManager : IDisposable
                 _bufferElementCount + meshDataLenght);
 
         var cmdBuf = _gd.AcquireCommandBuffer();
-        // copy data
         var copyPass = cmdBuf.BeginCopyPass();
         // copy old data
         var source = new BufferLocation { Buffer = oldBuffer, Offset = 0 };
@@ -100,27 +149,69 @@ public class MeshManager : IDisposable
         var fence = _gd.SubmitAndAcquireFence(cmdBuf);
 
         // copy indices to an array
-        var indicesData = new ushort[indicesLength];
-        for (int i = 0; i < indicesLength; i++)
+        int indexCounter = 0;
+        MeshCullingFace cullingFace = MeshCullingFace.All; // all faces cull by default
+        var indicesData = new MeshIndex[indicesLength];
+        for (int i = 0; i < indicesLength; i++, indexCounter++)
         {
-            indicesData[i] = (ushort)indices[i];
+            var index = indices[i];
+            var vertex = meshData[(int)index];
+
+            CalculateCullingFace(in vertex.Pos, ref cullingFace, faceCullingDistance);
+
+            MeshIndex meshIndex = new MeshIndex((ushort)index, cullingFace);
+            indicesData[i] = meshIndex;
+
+            if (indexCounter == 2)
+            {
+                SetIndexCullingFace(i - 2, cullingFace, ref indicesData);
+                indexCounter = -1;
+                cullingFace = MeshCullingFace.All;
+            }
         }
 
-        // var uploader = new ResourceUploader(_gd, meshDataLenght);
-        // uploader.SetBufferData(Meshes, _bufferElementCount, meshData, false);
-        //
-        // uploader.UploadAndWait();
-        // uploader.Dispose();
-        //
         _gd.WaitForFence(fence);
         transferBuffer.Dispose();
         oldBuffer.Dispose();
 
-        _meshOffsets.Add(_counter, new MeshData(indicesData, _bufferElementCount,
+        _meshDatas.Add(_counter, new MeshData(indicesData, _bufferElementCount,
                     (ushort)meshDataLenght));
 
         _bufferElementCount += meshDataLenght;
         return _counter++;
+    }
+
+    private void CalculateCullingFace(in Vector3 pos, ref MeshCullingFace cullingFace,
+            float faceCullingDistance)
+    {
+
+        if (pos.X < faceCullingDistance)
+            cullingFace &= ~MeshCullingFace.Right;  // Remove Right from culling
+
+        if (pos.X > -faceCullingDistance)
+            cullingFace &= ~MeshCullingFace.Left;   // Remove Left from culling
+
+        if (pos.Y < faceCullingDistance)
+            cullingFace &= ~MeshCullingFace.Top;    // Remove Top from culling
+
+        if (pos.Y > -faceCullingDistance)
+            cullingFace &= ~MeshCullingFace.Down;   // Remove Down from culling
+
+        if (pos.Z < faceCullingDistance)
+            cullingFace &= ~MeshCullingFace.Back;  // Remove Front from culling
+
+        if (pos.Z > -faceCullingDistance)
+            cullingFace &= ~MeshCullingFace.Front;   // Remove Back from culling
+    }
+
+    private void SetIndexCullingFace(int startingIndex, MeshCullingFace cullingFace,
+            ref MeshIndex[] indices)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            indices[startingIndex + i].CullingFace = cullingFace;
+        }
+        Console.WriteLine(cullingFace);
     }
 
     public void Dispose()
@@ -137,7 +228,7 @@ public class MeshManager : IDisposable
         if (disposing)
         {
             Meshes.Dispose();
-            _meshOffsets.Clear();
+            _meshDatas.Clear();
             _counter = 0;
             _bufferElementCount = 0;
         }
