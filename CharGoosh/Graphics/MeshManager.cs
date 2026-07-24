@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
 using MoonWorks.Storage;
+using Serilog;
 
 using Buffer = MoonWorks.Graphics.Buffer;
 namespace CharGoosh.Graphics;
@@ -104,24 +105,11 @@ public class MeshManager : IDisposable
             float faceCullingDistance = 1.0f)
     {
         var indicesLength = indices.Length;
-        if (indicesLength > ushort.MaxValue)
+        if (!ValidateMeshData(indicesLength, out string error))
         {
-            Console.WriteLine($"Voxel engine does not support indices more than {ushort.MaxValue}");
+            Log.Error(error);
             return 0;
         }
-
-        if (indicesLength % 3 != 0)
-        {
-            Console.WriteLine("Indices count must be a multiple of 3.");
-            return 0;
-        }
-
-        if (indicesLength == 0)
-        {
-            Console.WriteLine("MeshData should be passed with valid indices");
-            return 0;
-        }
-
         uint meshDataLenght = (uint)meshData.Length;
 
         var oldBuffer = Meshes;
@@ -181,6 +169,32 @@ public class MeshManager : IDisposable
         return _counter++;
     }
 
+    // Validation method
+    private bool ValidateMeshData(int indicesLength, out string errorMessage)
+    {
+        errorMessage = "";
+        if (indicesLength == 0)
+        {
+            errorMessage = "Empty index buffer provided. Mesh must have at least one triangle.";
+            return false;
+        }
+
+        if (indicesLength % 3 != 0)
+        {
+            errorMessage = $"Invalid index count {indicesLength}: must be multiple of 3 for triangles.";
+            return false;
+        }
+
+        if (indicesLength > ushort.MaxValue)
+        {
+            errorMessage = $"Index count {indicesLength} exceeds 16-bit limit ({ushort.MaxValue}). " +
+                           "Use 32-bit indices or split mesh into sub-meshes.";
+            return false;
+        }
+
+        return true;
+    }
+
     private void CalculateCullingFace(in Vector3 pos, ref MeshCullingFace cullingFace,
             float faceCullingDistance)
     {
@@ -211,7 +225,6 @@ public class MeshManager : IDisposable
         {
             indices[startingIndex + i].CullingFace = cullingFace;
         }
-        Console.WriteLine(cullingFace);
     }
 
     public void Dispose()

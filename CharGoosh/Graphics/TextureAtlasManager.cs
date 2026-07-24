@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
 using MoonWorks.Storage;
+using Serilog;
 
 using Buffer = MoonWorks.Graphics.Buffer;
 
@@ -23,6 +24,10 @@ public class AddTextureData(uint tid, uint atlas, byte[] data, string path = "",
     public bool Loading = loading;
     public bool Downloading = downloading;
 
+    public override string ToString()
+    {
+        return $"TID: {TID}, Atlas: {Atlas}, Path: '{Path}', Size: {Data.Length}b";
+    }
 }
 
 public class TextureAtlasManager : IDisposable
@@ -121,7 +126,9 @@ public class TextureAtlasManager : IDisposable
     {
         if (_idCounter >= _maxTextures)
         {
-            Console.WriteLine("Cant add more texture atlases");
+            Log.Warning("Cannot add more textures to texture atlases. " +
+            "Some textures will use fallback/default atlas. " +
+            "This may cause visual artifacts.");
             return 1;
         }
         _textureQeueu.Enqueue(new AddTextureData(_idCounter, _startingAtlas, [], path, callback));
@@ -132,7 +139,9 @@ public class TextureAtlasManager : IDisposable
     {
         if (_idCounter >= _maxTextures)
         {
-            Console.WriteLine("Cant add more texture atlases");
+            Log.Warning("Cannot add more textures to texture atlases. " +
+            "Some textures will use fallback/default atlas. " +
+            "This may cause visual artifacts.");
             return 1;
         }
         _textureQeueu.Enqueue(new AddTextureData(_idCounter, _startingAtlas, data, "", callback));
@@ -156,11 +165,13 @@ public class TextureAtlasManager : IDisposable
 
         if (_extending)
         {
+            Log.Information("TextureAtlas extended.");
             _extending = false;
             return;
         }
         if (_textureQeueu.Count == 0)
         {
+            Log.Fatal("texture queue is empty but we have a _fence");
             throw new UnreachableException("texture queue is empty but we have a _fence");
         }
 
@@ -209,8 +220,10 @@ public class TextureAtlasManager : IDisposable
             cmdBuf.EndCopyPass(copyPass);
             _fence = _gd.SubmitAndAcquireFence(cmdBuf);
             item.Downloading = true;
+            Log.Information("Downloading texture atlas result.");
             return true;
         }
+        Log.Information("Texture atlas result downloaded.");
         return false;
     }
 
@@ -237,6 +250,7 @@ public class TextureAtlasManager : IDisposable
                 if (rd.Result.HasFlag(TextureResult.CantFitAnything) &&
                         item.Atlas == _startingAtlas)
                 {
+                    Log.Information("A texture atlass is filled up. ignoring for next additions.");
                     _startingAtlas++;
                 }
                 if (item.Atlas == AtlasArray.LayerCountOrDepth - 1)
@@ -247,6 +261,7 @@ public class TextureAtlasManager : IDisposable
             }
             return;
         }
+        Log.Information("Added texture: {$Data}", item);
         item.Callback?.Invoke(item, 0, "Success");
         _textureToAdd?.Dispose();
         _textureToAdd = null;
@@ -285,6 +300,7 @@ public class TextureAtlasManager : IDisposable
             var resourceUploader = new ResourceUploader(_gd);
             _textureToAdd = resourceUploader.CreateTexture2DFromCompressed(item.Data.AsSpan(),
                     TextureFormat.R8G8B8A8Unorm, TextureUsageFlags.ComputeStorageRead);
+            Log.Information("Uploading texture to gpu so we can add it to atlas.");
             resourceUploader.UploadAndWait();
             resourceUploader.Dispose();
         }
@@ -316,9 +332,14 @@ public class TextureAtlasManager : IDisposable
         _fence = _gd.SubmitAndAcquireFence(cmdBuf);
     }
 
-    void ReadTextureData(AddTextureData item)
+    async void ReadTextureData(AddTextureData item)
     {
-        _titleStorage.GetFileSize(item.Path, out ulong size);
+        Log.Information("Reading texture data from disk.");
+        if (!_titleStorage.GetFileSize(item.Path, out ulong size))
+        {
+            Log.Fatal("Tried to load a texture file that does not exists.");
+            throw new Exception("Tried to load a file that does not exists!!!");
+        }
         item.Data = new byte[size];
         _titleStorage.ReadFile(item.Path, item.Data.AsSpan());
         item.Loading = false;
@@ -359,7 +380,7 @@ public class TextureAtlasManager : IDisposable
         cmdBuf.EndCopyPass(copyPass);
         _fence = _gd.SubmitAndAcquireFence(cmdBuf);
         _extending = true;
-        Console.WriteLine("Extending texture atlas");
+        Log.Information("Extending texture atlas.");
     }
 
     public void Dispose()

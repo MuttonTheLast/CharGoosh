@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using MoonWorks.Graphics;
 using MoonWorks.Storage;
+using Serilog;
 
 namespace CharGoosh.Graphics;
 
@@ -45,7 +46,7 @@ public class ResourceManager : IDisposable
                 _nameToMeshID.TryGetValue(name, out result);
                 break;
             default:
-                Console.WriteLine("Tried to get resource type that does not exists: {0}",
+                Log.Warning("Tried to get resource type that does not exists: {0}",
                         type);
                 return 0;
         }
@@ -71,7 +72,7 @@ public class ResourceManager : IDisposable
                 AddMesh(name, id);
                 break;
             default:
-                Console.WriteLine("Treied to Add resource type that does not exists: {0}", type);
+                Log.Warning("Treied to Add resource type that does not exists: {0}", type);
                 return false;
         }
         return true;

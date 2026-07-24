@@ -5,6 +5,7 @@ using CharGoosh.Graphics;
 using MoonWorks;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
+using Serilog;
 
 namespace CharGoosh;
 
@@ -36,6 +37,7 @@ public class CGGame : MoonWorks.Game
     public readonly ResourceManager ResourceManager;
     public bool Debug { get; private set; }
 
+    public Logger.Logger Logger;
 
     bool depthOnly = false;
 
@@ -48,7 +50,8 @@ public class CGGame : MoonWorks.Game
         base(appInfo, windowCreateInfo, framePacingSettings, availableShaderFormats, debugMode)
     {
         Debug = debugMode;
-
+        this.Logger = new Logger.Logger();
+        this.Logger.SetGlobal();
         // ResourceManager.TextureAtlasManager = new TextureAtlasManager(GraphicsDevice, RootTitleStorage,
         //         16, 256, ushort.MaxValue, Debug);
         //_meshManager = new MeshManager(GraphicsDevice, RootTitleStorage);
@@ -227,6 +230,7 @@ public class CGGame : MoonWorks.Game
 
     private void WindowSizeChanged(uint width, uint height)
     {
+        Log.Information("Window size changed. width: {width}, height: {height}.", width, height);
         depthTexture.Dispose();
         depthTexture = Texture.Create2D(GraphicsDevice, width, height, TextureFormat.D16Unorm,
                 TextureUsageFlags.Sampler | TextureUsageFlags.DepthStencilTarget);
@@ -321,7 +325,6 @@ public class CGGame : MoonWorks.Game
 
     protected override void Destroy()
     {
-        Console.WriteLine("Destroy Called :) im happy");
     }
 
     // just a method that im testing what i want to do
