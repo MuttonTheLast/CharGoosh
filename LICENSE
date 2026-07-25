@@ -1,0 +1,81 @@
+CharGoosh - Voxel Engine
+
+Copyright (c) 2026 MuttonTheLast
+
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+You can also see full GNU GPLv3 license in GPL3-LICENSE file.
+
+------------------------------------------------------------------------
+ADDITIONAL PERMISSION UNDER GPLv3 SECTION 7
+------------------------------------------------------------------------
+
+As a special exception, you may create and distribute plugins, DLLs,
+or modules that are loaded by this program at runtime, provided they
+do not modify the Program's source code. Such plugins may be
+distributed under terms of your choice, including proprietary licenses.
+
+This exception does not apply to modifications of the Program itself.
+Any modified version of the Program source code must be distributed
+under the GPLv3.
+
+As a special exception, you may combine or link this Program with any
+software, library, or SDK that is distributed under a license that is
+incompatible with the GPLv3 (including but not limited to proprietary
+software). You may distribute the resulting combined work, provided
+that:
+
+1. The source code of this Program remains available under the GPLv3
+   terms.
+2. The other software's license terms apply only to that software.
+3. This exception does not modify the GPLv3 terms for the core Program
+   itself.
+
+This exception is intended to allow compatibility with platforms like
+Steam, app stores, and proprietary SDKs while keeping the core Program
+free and open under the GPLv3.
+
+
+------------------------------------------------------------------------
+TRADEMARK RESTRICTION
+------------------------------------------------------------------------
+
+"CharGoosh" (in any capitalization, including but not limited to
+CHARGOOSH, chargoosh, ChArGoOsH, and any other variant) is a trademark
+of MuttonTheLast. This trademark restriction only applies to modified
+versions of this Program (CharGoosh) and its source code.
+
+If you modify this Program, you may distribute your modified version
+under a different name, such as "CharGoosh-Better" or any other name
+that clearly indicates it is a modified version and not the original
+Program. You may not use "CharGoosh" in any capitalization to refer
+to your modified version.
+
+This restriction does NOT apply to:
+- Other software projects that happen to share the name "CharGoosh"
+  (in any capitalization) but do not use this Program's source code
+- Referencing the original "CharGoosh" project in documentation
+- Stating that your work is based on or derived from "CharGoosh"
+- Using the name "CharGoosh" in a descriptive way (e.g., "This is a
+  fork of CharGoosh")
+
+This restriction only applies to:
+- Distributing your modified version under the name "CharGoosh" in
+  any capitalization
+- Using the "CharGoosh" name in any capitalization in a way that
+  implies your modified version is the original or officially endorsed
+
+This trademark restriction is permitted under GPLv3 Section 7 as a
+"further restriction" to preserve the identity of the original work.

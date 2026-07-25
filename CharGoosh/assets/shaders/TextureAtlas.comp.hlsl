@@ -1,3 +1,12 @@
+// CharGoosh - Copyright (c) 2026 MuttonTheLast
+// This file is part of CharGoosh.
+//
+// Licensed under the GNU GPLv3 with additional permissions.
+// See the LICENSE file for details.
+//
+// This program is distributed WITHOUT ANY WARRANTY.
+// "CharGoosh"™ is a trademark of MuttonTheLast.
+
 #define RESULT_SUCCESS 0       // success
 #define RESULT_FAILED 1        // failed
 #define RESULT_CANT_FIT 2      // Not fit in current texture atlas
