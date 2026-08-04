@@ -15,11 +15,13 @@
 
    <ProjectReference Include="../modules/CharGoosh.Logger/CharGoosh.Logger.csproj" />
    <ProjectReference Include="../modules/CharGoosh.Math/CharGoosh.Math.csproj" />
+   <ProjectReference Include="../modules/CharGoosh.Graphics.Resource/CharGoosh.Graphics.Resource.csproj" />
  </ItemGroup>
 
  <ItemGroup>
-   <Content Include="../assets\**\*">
+    <Content Include="../assets/**/*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets/%(RecursiveDir)%(Filename)%(Extension)</Link>
    </Content>
  </ItemGroup>
 

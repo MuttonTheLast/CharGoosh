@@ -7,8 +7,6 @@
 // This program is distributed WITHOUT ANY WARRANTY.
 // "CharGoosh"™ is a trademark of MuttonTheLast.
 
-using System;
-using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
@@ -16,7 +14,7 @@ using MoonWorks.Storage;
 using Serilog;
 
 using Buffer = MoonWorks.Graphics.Buffer;
-namespace CharGoosh.Graphics;
+namespace CharGoosh.Graphics.Resource;
 
 [Flags]
 public enum MeshCullingFace : byte
@@ -268,4 +266,5 @@ public struct MeshDataGPU(Vector3 pos, Vector3 normal, Vector2 uv)
     [FieldOffset(24)]
     public Vector2 UV = uv;
 }
+
 

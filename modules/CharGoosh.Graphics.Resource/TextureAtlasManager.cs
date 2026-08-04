@@ -1,3 +1,4 @@
+
 // CharGoosh - Copyright (c) 2026 MuttonTheLast
 // This file is part of CharGoosh.
 //
@@ -8,10 +9,8 @@
 // "CharGoosh"™ is a trademark of MuttonTheLast.
 
 
-// i wont add remove texture because maybe someone needs it (and im lazy)
-
-using System;
-using System.Collections.Generic;
+// NOTE: i wont add remove texture because maybe someone needs old texture (and im lazy)
+// Happy to have pull request for that
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MoonWorks.Graphics;
@@ -20,7 +19,7 @@ using Serilog;
 
 using Buffer = MoonWorks.Graphics.Buffer;
 
-namespace CharGoosh.Graphics;
+namespace CharGoosh.Graphics.Resource;
 // item, result, reason
 using AddCallback = Action<AddTextureData, uint, string>;
 public class AddTextureData(uint tid, uint atlas, byte[] data, string path = "", AddCallback? cb = null,
@@ -132,7 +131,7 @@ public class TextureAtlasManager : IDisposable
         HandleTextures();
     }
 
-    internal uint RequestAddTexture(string path, AddCallback? callback = null)
+    public uint RequestAddTexture(string path, AddCallback? callback = null)
     {
         if (_idCounter >= _maxTextures)
         {
@@ -145,7 +144,7 @@ public class TextureAtlasManager : IDisposable
         return _idCounter++;
     }
 
-    internal uint RequestAddTexture(byte[] data, AddCallback? callback = null)
+    public uint RequestAddTexture(byte[] data, AddCallback? callback = null)
     {
         if (_idCounter >= _maxTextures)
         {
@@ -481,5 +480,6 @@ public enum TextureResult : uint
     CantFit = 1 << 1,
     CantFitAnything = 1 << 2,
 }
+
 
 

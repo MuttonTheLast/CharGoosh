@@ -11,6 +11,7 @@ using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using CharGoosh.Graphics;
+using CharGoosh.Graphics.Resource;
 using MoonWorks;
 using MoonWorks.Graphics;
 using MoonWorks.Input;
@@ -24,8 +25,9 @@ using PrimitiveType = MoonWorks.Graphics.PrimitiveType;
 public class CGGame : MoonWorks.Game
 {
 
-
-    readonly static string SHADERS_PATH = "assets/shaders/";
+    readonly static string BASE_PATH;
+    readonly static string SHADERS_PATH;
+    readonly static string SHADERS_FULL_PATH;
 
 
 
@@ -52,6 +54,13 @@ public class CGGame : MoonWorks.Game
 
     // debug things
     readonly uint woodimg = 0;
+
+    static CGGame()
+    {
+        BASE_PATH = SDL3.SDL.SDL_GetBasePath();
+        SHADERS_PATH = "assets/shaders/";
+        SHADERS_FULL_PATH = BASE_PATH + SHADERS_PATH;
+    }
 
     public CGGame(AppInfo appInfo, WindowCreateInfo windowCreateInfo,
             FramePacingSettings framePacingSettings, ShaderFormat availableShaderFormats,
@@ -136,11 +145,13 @@ public class CGGame : MoonWorks.Game
 
         Shader vertex_shader = ShaderCross.Create(GraphicsDevice, RootTitleStorage,
                 SHADERS_PATH + "PositionMeshIndex.vert.hlsl", "VS_Main",
-                ShaderCross.ShaderFormat.HLSL, ShaderStage.Vertex, Debug, null, SHADERS_PATH);
+                ShaderCross.ShaderFormat.HLSL, ShaderStage.Vertex,
+                Debug, null, SHADERS_FULL_PATH);
 
         Shader pixel_shader = ShaderCross.Create(GraphicsDevice, RootTitleStorage,
                 SHADERS_PATH + "PositionMeshIndex.pixel.hlsl", "PS_Main",
-                ShaderCross.ShaderFormat.HLSL, ShaderStage.Fragment, Debug, null, SHADERS_PATH);
+                ShaderCross.ShaderFormat.HLSL, ShaderStage.Fragment,
+                Debug, null, SHADERS_FULL_PATH);
 
         var pci = new GraphicsPipelineCreateInfo
         {

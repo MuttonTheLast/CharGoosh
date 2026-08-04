@@ -7,13 +7,11 @@
 // This program is distributed WITHOUT ANY WARRANTY.
 // "CharGoosh"™ is a trademark of MuttonTheLast.
 
-using System;
-using System.Collections.Generic;
 using MoonWorks.Graphics;
 using MoonWorks.Storage;
 using Serilog;
 
-namespace CharGoosh.Graphics;
+namespace CharGoosh.Graphics.Resource;
 
 public class ResourceManager : IDisposable
 {
@@ -140,3 +138,4 @@ public class ResourceManager : IDisposable
     }
 
 }
+
