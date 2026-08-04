@@ -27,4 +27,22 @@ you can build and replace it.
 * [FAudio](https://github.com/FNA-XNA/FAudio) - Audio
 * [Wellspring](https://github.com/MoonsideGames/Wellspring) - Font Rendering
 * [dav1dfile](https://github.com/MoonsideGames/dav1dfile) - Compressed Video
+
 Prebuilt native dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.gz
+
+## License
+The license is GPLv3 that you can see in [LICENSE](./LICENSE).
+
+That means it should be open source if you publish it on internet.
+
+You can create modules and modules be closed source but any change to my code 
+should be open source.
+
+You can publish it and take money in any market but it could be open source 
+and not use the names that are in trademark sections of [LICENSE](./LICENSE)
+
+### Third Party
+This project uses third party tools and licenses are different so be careful 
+if you want to change core libs.
+
+> Full information on [LICENSE](./LICENSE) and [GPLv3](./GPL3-LICENSE).
