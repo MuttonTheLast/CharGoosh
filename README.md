@@ -14,3 +14,17 @@ However, primary testing and support will focus on **_Linux and Windows._**
 ## What is CharGoosh
 > [!NOTE]
 > **CharGoosh** is a persian word that means: **Rectangle**
+
+## Dependencies
+
+### MoonWorks
+this project uses [**MoonWorks**](https://github.com/MoonsideGames/MoonWorks) as main library.
+and it has dependencies. MoonWorks dotnet .dll is in project prebuilt in lib/dotnet/ folder.
+you can build and replace it.
+> these are MoonWorks dependencies.
+* [SDL3](https://github.com/flibitijibibo/SDL3-CS) - Window management, Input, Graphics
+* [IRO](https://github.com/MoonsideGames/IRO) - Image Loading
+* [FAudio](https://github.com/FNA-XNA/FAudio) - Audio
+* [Wellspring](https://github.com/MoonsideGames/Wellspring) - Font Rendering
+* [dav1dfile](https://github.com/MoonsideGames/dav1dfile) - Compressed Video
+Prebuilt native dependencies can be obtained here: https://moonside.games/files/moonlibs.tar.gz
