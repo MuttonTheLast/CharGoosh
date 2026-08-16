@@ -10,7 +10,7 @@
 using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using CharGoosh.Graphics;
+using CharGoosh.Graphics.Vertex;
 using CharGoosh.Graphics.Resource;
 using MoonWorks;
 using MoonWorks.Graphics;
@@ -144,12 +144,12 @@ public class CGGame : MoonWorks.Game
 
 
         Shader vertex_shader = ShaderCross.Create(GraphicsDevice, RootTitleStorage,
-                SHADERS_PATH + "PositionMeshIndex.vert.hlsl", "VS_Main",
+                SHADERS_PATH + PositionMeshIndexAtlas.VertexShaderName, "VS_Main",
                 ShaderCross.ShaderFormat.HLSL, ShaderStage.Vertex,
                 Debug, null, SHADERS_FULL_PATH);
 
         Shader pixel_shader = ShaderCross.Create(GraphicsDevice, RootTitleStorage,
-                SHADERS_PATH + "PositionMeshIndex.pixel.hlsl", "PS_Main",
+                SHADERS_PATH + PositionMeshIndexAtlas.PixelShaderName, "PS_Main",
                 ShaderCross.ShaderFormat.HLSL, ShaderStage.Fragment,
                 Debug, null, SHADERS_FULL_PATH);
 
@@ -246,6 +246,9 @@ public class CGGame : MoonWorks.Game
 
         MainWindow.RegisterSizeChangeCallback(WindowSizeChanged);
         DoTest();
+
+        pixel_shader.Dispose();
+        vertex_shader.Dispose();
     }
 
     private void WindowSizeChanged(uint width, uint height)
@@ -383,33 +386,6 @@ public class CGGame : MoonWorks.Game
 //     }
 // }
 
-
-[StructLayout(LayoutKind.Explicit, Size = 24)]
-struct PositionMeshIndexAtlas(Vector3 pos, uint meshOffset, uint vertexIndex, uint tid) : IVertexType
-{
-    [FieldOffset(0)]
-    public Vector3 Position = pos;
-    [FieldOffset(12)]
-    public uint MeshOffset = meshOffset;
-    [FieldOffset(16)]
-    public uint VertexIndex = vertexIndex;
-    [FieldOffset(20)]
-    public uint TID = tid;
-
-
-    public static VertexElementFormat[] Formats { get; } = [
-        VertexElementFormat.Float3,
-        VertexElementFormat.Uint,
-        VertexElementFormat.Uint,
-        VertexElementFormat.Uint,
-    ];
-
-    public static uint[] Offsets { get; } = [
-        0, 12, 16, 20
-    ];
-
-
-}
 
 [StructLayout(LayoutKind.Explicit, Size = 68)]
 struct VertexUniform(Matrix4x4 mat, uint atlasSize)

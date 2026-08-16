@@ -16,6 +16,7 @@
    <ProjectReference Include="../modules/CharGoosh.Logger/CharGoosh.Logger.csproj" />
    <ProjectReference Include="../modules/CharGoosh.Math/CharGoosh.Math.csproj" />
    <ProjectReference Include="../modules/CharGoosh.Graphics.Resource/CharGoosh.Graphics.Resource.csproj" />
+   <ProjectReference Include="../modules/CharGoosh.Graphics.Vertex/CharGoosh.Graphics.Vertex.csproj" />
  </ItemGroup>
 
  <ItemGroup>
