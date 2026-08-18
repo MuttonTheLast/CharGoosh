@@ -1,5 +1,11 @@
 <Solution>
-    
+
     <Project Path="CharGoosh/CharGoosh.csproj" />
+    <Project Path="modules/CharGoosh.Game.Block/CharGoosh.Game.Block.csproj" />
+    <Project Path="modules/CharGoosh.Game.Tag/CharGoosh.Game.Tag.csproj" />
+    <Project Path="modules/CharGoosh.Game.World/CharGoosh.Game.World.csproj" />
+    <Project Path="modules/CharGoosh.Graphics.Resource/CharGoosh.Graphics.Resource.csproj" />
+    <Project Path="modules/CharGoosh.Graphics.Vertex/CharGoosh.Graphics.Vertex.csproj" />
+    <Project Path="modules/CharGoosh.Logger/CharGoosh.Logger.csproj" />
     <Project Path="modules/CharGoosh.Math/CharGoosh.Math.csproj" />
 </Solution>
