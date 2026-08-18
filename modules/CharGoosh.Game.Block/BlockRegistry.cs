@@ -37,15 +37,14 @@ public static class BlockRegistry
     private static readonly Dictionary<string, int> _nameToId = new(INIT_LEN);
     private static int _counter = 0;
 
+    static BlockRegistry()
+    {
+        var block = AddBlock();
+        block.Name("air");
+    }
+
     public static Block RegisterBlock()
     {
-
-        if (_counter == 0)
-        {
-            var block = AddBlock();
-            block.Name("air");
-        }
-
         return AddBlock();
     }
 

@@ -35,8 +35,6 @@ public struct Transform
         set
         {
             value = value * MathF.PI / 180f;
-
-            Console.WriteLine(value);
             Rotation = Quaternion.CreateFromYawPitchRoll(value.Y, value.X, value.Z);
         }
     }

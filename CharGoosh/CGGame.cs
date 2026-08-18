@@ -339,7 +339,7 @@ public class CGGame : MoonWorks.Game
                     ResourceManager.TextureAtlasManager.TextureDataBuffer,
                     ResourceManager.MeshManager.Meshes
             ]);
-            renderPass.DrawIndexedPrimitives(36, 1, 0, 0, 0);
+            renderPass.DrawIndexedPrimitives(indexBuffer.Size / sizeof(ushort), 1, 0, 0, 0);
             cmdbuf.EndRenderPass(renderPass);
         }
         GraphicsDevice.Submit(cmdbuf);

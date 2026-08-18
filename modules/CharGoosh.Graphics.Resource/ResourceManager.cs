@@ -35,7 +35,7 @@ public class ResourceManager : IDisposable
     public uint GetResourceID(string resourceName)
     {
         uint result = 0;
-        if (TryParseName(resourceName, out string[] data))
+        if (!TryParseName(resourceName, out string[] data))
         {
             return result;
         }
@@ -61,7 +61,7 @@ public class ResourceManager : IDisposable
     public bool AddResource(string resourceName, uint id)
     {
 
-        if (TryParseName(resourceName, out string[] data))
+        if (!TryParseName(resourceName, out string[] data))
         {
             return false;
         }
@@ -134,7 +134,7 @@ public class ResourceManager : IDisposable
             TextureAtlasManager.Dispose();
         }
 
-        disposed = false;
+        disposed = true;
     }
 
 }

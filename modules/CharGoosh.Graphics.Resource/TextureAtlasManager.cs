@@ -52,7 +52,7 @@ public class TextureAtlasManager : IDisposable
 
 
     // private
-    Texture _oldTextureAtlas = null!;
+    Texture? _oldTextureAtlas = null;
     Texture? _textureToAdd = null;
     Fence? _fence = null;
     uint _startingAtlas = 0;
@@ -414,7 +414,7 @@ public class TextureAtlasManager : IDisposable
             TextureDataBuffer.Dispose();
 
             _textureQeueu.Clear();
-            _oldTextureAtlas.Dispose();
+            _oldTextureAtlas?.Dispose();
             _textureToAdd?.Dispose();
 
             _resultDataBuffer.Dispose();
@@ -426,7 +426,7 @@ public class TextureAtlasManager : IDisposable
             _fence = null;
         }
 
-        disposed = false;
+        disposed = true;
     }
 }
 
